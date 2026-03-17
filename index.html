@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supermarket Indonesia</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    margin:0;
+    background:#f2f4f7;
+}
+
+/* HEADER */
+header{
+    background:#27ae60;
+    padding:15px 40px;
+    color:white;
+}
+
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.logo{
+    font-size:20px;
+    font-weight:bold;
+}
+
+nav a{
+    color:white;
+    text-decoration:none;
+    margin-left:20px;
+    font-weight:500;
+    cursor:pointer;
+}
+
+nav a:hover{
+    color:#d4f5dd;
+}
+
+/* LOGIN BOX */
+.login-box{
+    max-width:350px;
+    margin:60px auto;
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.login-box input{
+    width:100%;
+    padding:10px;
+    margin:10px 0;
+}
+
+.login-box button{
+    width:100%;
+    padding:10px;
+    background:#27ae60;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+/* STORE */
+.container{
+    padding:20px;
+}
+
+.store-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:30px;
+    max-width:1100px;
+    margin:auto;
+}
+
+@media(max-width:900px){
+    .store-grid{ grid-template-columns:repeat(2,1fr); }
+}
+@media(max-width:600px){
+    .store-grid{ grid-template-columns:1fr; }
+}
+
+.store-card{
+    background:white;
+    padding:30px;
+    border-radius:18px;
+    text-align:center;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+    transition:0.3s;
+}
+
+.store-card:hover{
+    transform:translateY(-8px);
+}
+
+.store-card img{
+    width:120px;
+    height:80px;
+    object-fit:contain;
+    margin-bottom:15px;
+}
+
+.hidden{
+    display:none;
+}
+
+/* PRODUCT */
+.product-grid{
+    margin-top:20px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:20px;
+}
+
+.product-card{
+    background:white;
+    border-radius:12px;
+    padding:15px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+.product-card img{
+    width:100%;
+    height:150px;
+    object-fit:cover;
+    border-radius:8px;
+}
+
+.product-name{
+    margin-top:10px;
+    font-weight:bold;
+}
+
+.product-price{
+    color:#e74c3c;
+    font-weight:bold;
+}
+
+</style>
+</head>
+<body>
+
+<header>
+    <div class="navbar">
+        <div class="logo">🛒 Supermarket Indonesia</div>
+        <nav id="navMenu"></nav>
+    </div>
+</header>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="login-box">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+</div>
+
+<!-- HOME PAGE -->
+<div class="container hidden" id="home">
+
+    <h2 style="text-align:center">Pilih Supermarket Favoritmu</h2>
+
+    <div class="store-grid">
+
+        <div class="store-card" onclick="openStore('Indomaret')">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpngRru35AD8XgD4kYAdwKYlppQwyj_d3Igg&s">
+            <h3>Indomaret</h3>
+        </div>
+
+        <div class="store-card" onclick="openStore('Super Indo')">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHQjIuq9CgA08OkbQ0TPPQfiE3tR3ZbLP0kQ&s">
+            <h3>Super Indo</h3>
+        </div>
+
+        <div class="store-card" onclick="openStore('Alfamart')">
+            <img src="https://images.seeklogo.com/logo-png/33/2/alfamart-logo-png_seeklogo-339891.png">
+            <h3>Alfamart</h3>
+        </div>
+
+        <div class="store-card" onclick="openStore('Alfamidi')">
+            <img src="https://upload.wikimedia.org/wikipedia/id/7/7f/Alfamidi.svg">
+            <h3>Alfamidi</h3>
+        </div>
+
+        <div class="store-card" onclick="openStore('Hypermart')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Hypermart_G7.svg">
+            <h3>Hypermart</h3>
+        </div>
+
+        <div class="store-card" onclick="openStore('Hari Hari')">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT879jjz8yZr0rEEQTqfiA1wof5B54dRBvrtA&s">
+            <h3>Hari Hari</h3>
+        </div>
+
+    </div>
+</div>
+
+<!-- STORE PAGE -->
+<div class="container hidden" id="storePage">
+    <h2 id="storeTitle"></h2>
+    <button onclick="goBack()">Kembali</button>
+    <div class="product-grid" id="productList"></div>
+</div>
+
+<script>
+
+// ==== LOGIN SYSTEM JS ==== ===
+
+function updateNavbar(){
+    const user = localStorage.getItem("loginUser");
+    const nav = document.getElementById("navMenu");
+
+    if(user){
+        nav.innerHTML = `
+            <span>Halo, ${user}</span>
+            <a onclick="logout()">Ganti Akun</a>
+        `;
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("home").classList.remove("hidden");
+    } else {
+        nav.innerHTML = `<a>Silakan Login</a>`;
+        document.getElementById("loginPage").classList.remove("hidden");
+        document.getElementById("home").classList.add("hidden");
+    }
+}
+
+function login(){
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+
+    if(user === "admin" && pass === "123"){
+        localStorage.setItem("loginUser", user);
+        updateNavbar();
+    } else {
+        alert("Username atau password salah!");
+    }
+}
+
+function logout(){
+    localStorage.removeItem("loginUser");
+    location.reload();
+}
+
+// ==== PRODUCT SYSTEM ====
+
+const products = [
+"Beras 5kg","Minyak Goreng","Gula 1kg","Tepung",
+"Telur","Mie Instan","Susu","Kopi",
+"Teh","Sabun","Shampoo","Pasta Gigi",
+"Detergen","Air Mineral","Roti","Keju",
+"Sosis","Nugget","Biskuit","Coklat"
+];
+
+// DATA PRODUK + GAMBAR SESUAI NAMA
+const productData = [
+{ name:"Beras 5kg", img:"https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full//109/MTA-52497883/sania_sania-beras--5-kg-_full02.jpg" },
+{ name:"Minyak Goreng", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA-12pws_V_freejeI_CTBX4MPmCPbC2_uuQ&s" },
+{ name:"Gula 1kg", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJKx5qxXSEolzJ95mXTYUJANgrb-h2VppkVg&s" },
+{ name:"Tepung", img:"https://c.alfagift.id/product/1/1_A28090001915_20220829102607550_base.jpg" },
+{ name:"Telur", img:"https://jatinomindah.com/uploads/artikel/artikel-202501120001.jpg" },
+{ name:"Mie Instan", img:"https://images.tokopedia.net/img/cache/700/VqbcmM/2023/12/13/f1ed1e63-874b-4fd4-8a2f-faa5088bdbe4.jpg.webp" },
+{ name:"Susu", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTXZ6UkYLAK23P9j2DlTbmv3Obvw0VC7xshA&s" },
+{ name:"Kopi", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4RBDpQU1xZki1Ye1uBJDmHdnGL4nEH4K8ng&s" },
+{ name:"Teh", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQc_Rh7itF_-CSr0kD_p7n_SBljMo4EfclJzA&s" },
+{ name:"Sabun", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS14xNUP97izvGgBq6uio8IHYBh03YEQxXvLA&s" },
+{ name:"Shampoo", img:"https://cloudinary.images-iherb.com/image/upload/f_auto,q_auto:eco/images/hds/hds94959/y/24.jpg" },
+{ name:"Pasta Gigi", img:"https://allofresh.id/blog/wp-content/uploads/2023/11/merek-pasta-gigi-2.jpg" },
+{ name:"Detergen", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR9iecn3e86GdgVLib6Fe7iGjS0jnrw4sylYg&s" },
+{ name:"Air Mineral", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTIaTDwniCWaPRWViR_h_VtCGrERx2V8A0F-Q&s" },
+{ name:"Roti Tawar", img:"https://solvent-production.s3.amazonaws.com/media/images/products/2021/10/DSC_0472_R22Sial.JPG" },
+{ name:"Keju", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTU3EGGx2SX5HS99PF1ko_4z_4EQmlLVUlsxQ&s" },
+{ name:"Sosis", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQuceWO84b8jh2JJW3bW4HSfncHoOPOFNkUSQ&s" },
+{ name:"Nugget", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTodeN6vhjq7LURL5GrNe-FA_7uxIfRx8guhQ&s" },
+{ name:"Biskuit", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLkn2Qwsr539ngccRfqW_ii1Ad_-OiVl5_5w&s" },
+{ name:"Coklat", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfaQo3Xk9g39jo81WZ24d8Wmv68v6VSgr2Fw&s" }
+];
+
+function openStore(storeName){
+    document.getElementById("home").classList.add("hidden");
+    document.getElementById("storePage").classList.remove("hidden");
+    document.getElementById("storeTitle").innerText = storeName;
+
+    const productList = document.getElementById("productList");
+    productList.innerHTML = "";
+
+    productData.forEach(product=>{
+        const price = Math.floor(Math.random()*20000)+5000;
+
+        productList.innerHTML += `
+            <div class="product-card">
+                <img src="${product.img}">
+                <div class="product-name">${product.name}</div>
+                <div class="product-price">Rp ${price.toLocaleString()}</div>
+            </div>
+        `;
+    });
+}
+
+    const productList = document.getElementById("productList");
+    productList.innerHTML = "";
+
+    products.forEach(product=>{
+        const price = Math.floor(Math.random()*20000)+5000;
+
+        productList.innerHTML += `
+            <div class="product-card">
+                <img src="${product.img}">
+                <div class="product-name">${product}</div>
+                <div class="product-price">Rp ${price.toLocaleString()}</div>
+            </div>
+        `;
+    });
+
+function goBack(){
+    document.getElementById("storePage").classList.add("hidden");
+    document.getElementById("home").classList.remove("hidden");
+}
+
+updateNavbar();
+
+</script>
+
+</body>
+</html>
