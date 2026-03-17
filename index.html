@@ -214,10 +214,18 @@ nav a:hover{
 
 <script>
 
+let users = JSON.parse(localStorage.getItem("users")) || [];
+
 if(users.length === 0){
-    users.push({username:"admin", password:"123"});
+    users.push({username:"admin" , password:"123"});
     localStorage.setItem("users", JSON.stringify(users));
 }
+
+if(users.length === 0){
+    users.push({username:"arfan_aysel" , password:"Aysel24122008"});
+    localStorage.setItem("users", JSON.stringify(users));
+}
+
 
 // ==== LOGIN SYSTEM JS ==== ===
 
@@ -239,7 +247,7 @@ function updateNavbar(){
     }
 }
 
-let users = JSON.parse(localStorage.getItem("users")) || [];
+
 
 function login(){
     const user = document.getElementById("username").value;
