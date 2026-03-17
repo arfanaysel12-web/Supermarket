@@ -161,6 +161,8 @@ nav a:hover{
     <input type="text" id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
+    <button onclick="register()">Daftar</button>
+    <button onclick="changePassword()">Ubah Password</button>
 </div>
 
 <!-- HOME PAGE -->
@@ -212,6 +214,11 @@ nav a:hover{
 
 <script>
 
+if(users.length === 0){
+    users.push({username:"admin", password:"123"});
+    localStorage.setItem("users", JSON.stringify(users));
+}
+
 // ==== LOGIN SYSTEM JS ==== ===
 
 function updateNavbar(){
@@ -232,15 +239,57 @@ function updateNavbar(){
     }
 }
 
+let users = JSON.parse(localStorage.getItem("users")) || [];
+
 function login(){
     const user = document.getElementById("username").value;
     const pass = document.getElementById("password").value;
 
-    if(user === "admin" && pass === "123"){
+    let found = users.find(u => u.username === user && u.password === pass);
+
+    if(found){
         localStorage.setItem("loginUser", user);
         updateNavbar();
     } else {
         alert("Username atau password salah!");
+    }
+}
+
+function register(){
+    const username = prompt("Masukkan username baru:");
+    const password = prompt("Masukkan password:");
+
+    if(!username || !password){
+        alert("Tidak boleh kosong!");
+        return;
+    }
+
+    let exist = users.find(u => u.username === username);
+
+    if(exist){
+        alert("Username sudah ada!");
+        return;
+    }
+
+    users.push({username, password});
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("Akun berhasil dibuat!");
+}
+
+function changePassword(){
+    const username = prompt("Username:");
+    const oldPass = prompt("Password lama:");
+    const newPass = prompt("Password baru:");
+
+    let user = users.find(u => u.username === username && u.password === oldPass);
+
+    if(user){
+        user.password = newPass;
+        localStorage.setItem("users", JSON.stringify(users));
+        alert("Password berhasil diubah!");
+    } else {
+        alert("Data salah!");
     }
 }
 
