@@ -144,6 +144,31 @@ nav a:hover{
     font-weight:bold;
 }
 
+.product-card input{
+    width:100%;
+    margin-top:8px;
+    padding:6px;
+}
+
+.product-card button{
+    width:100%;
+    margin-top:5px;
+    padding:8px;
+    border:none;
+    cursor:pointer;
+    border-radius:6px;
+}
+
+.btn-cart{
+    background:#27ae60;
+    color:white;
+}
+
+.btn-buy{
+    background:#e67e22;
+    color:white;
+}
+
 </style>
 </head>
 <body>
@@ -213,6 +238,8 @@ nav a:hover{
 </div>
 
 <script>
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
 let users = JSON.parse(localStorage.getItem("users")) || [];
 
@@ -350,12 +377,18 @@ function openStore(storeName){
 
     productData.forEach(product=>{
         const price = Math.floor(Math.random()*20000)+5000;
+        const safe = product.name.replace(/\s+/g,'-');
 
         productList.innerHTML += `
             <div class="product-card">
                 <img src="${product.img}">
                 <div class="product-name">${product.name}</div>
                 <div class="product-price">Rp ${price.toLocaleString()}</div>
+
+                <input type="number" id="qty-${safe}" value="1" min="1">
+
+                <button class="btn-cart" onclick="addToCart('${safe}','${product.name}',${price})">+ Keranjang</button>
+                <button class="btn-buy" onclick="buyNow('${safe}','${product.name}',${price})">Beli</button>
             </div>
         `;
     });
@@ -379,6 +412,28 @@ function openStore(storeName){
 function goBack(){
     document.getElementById("storePage").classList.add("hidden");
     document.getElementById("home").classList.remove("hidden");
+}
+
+function addToCart(id,name,price){
+    const qty = parseInt(document.getElementById(`qty-${id}`).value);
+
+    let item = cart.find(i => i.name === name);
+
+    if(item){
+        item.qty += qty;
+    } else {
+        cart.push({name,price,qty});
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    alert("Masuk ke keranjang!");
+}
+
+function buyNow(id,name,price){
+    const qty = parseInt(document.getElementById(`qty-${id}`).value);
+    const total = price * qty;
+
+    alert(`Beli ${name} x${qty}\nTotal: Rp ${total.toLocaleString()}`);
 }
 
 updateNavbar();
