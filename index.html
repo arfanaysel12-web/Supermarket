@@ -169,6 +169,72 @@ nav a:hover{
     color:white;
 }
 
+#receiptBox h3{
+    margin:0;
+    color:#27ae60;
+}
+
+.receipt-item{
+    display:flex;
+    justify-content:space-between;
+    margin:8px 0;
+    border-bottom:1px dashed #ccc;
+    padding-bottom:5px;
+}
+
+.total{
+    font-weight:bold;
+    margin-top:10px;
+    font-size:18px;
+}
+
+/* IKLAN */
+.ads{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.6);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+.ads-box{
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    text-align:center;
+    width:300px;
+    position:relative;
+    animation:pop 0.3s ease;
+}
+
+.ads-box button{
+    background:#27ae60;
+    color:white;
+    border:none;
+    padding:10px;
+    margin-top:10px;
+    cursor:pointer;
+    width:100%;
+}
+
+.close-ads{
+    position:absolute;
+    right:10px;
+    top:5px;
+    cursor:pointer;
+    font-size:18px;
+}
+
+@keyframes pop{
+    from{transform:scale(0.7);opacity:0;}
+    to{transform:scale(1);opacity:1;}
+}
+
 </style>
 </head>
 <body>
@@ -237,9 +303,57 @@ nav a:hover{
     <div class="product-grid" id="productList"></div>
 </div>
 
+<div class="container hidden" id="receiptPage">
+    <h2>🧾 Struk Belanja</h2>
+
+    <div id="receiptBox" style="background:white;padding:20px;border-radius:10px;max-width:400px;margin:auto;"></div>
+    
+    <br>
+    <button onclick="printReceipt()">🖨️ Print / Save PDF</button>
+    <button onclick="backToHome()">Kembali</button>
+</div>
+
+<div class="container hidden" id="checkoutPage">
+    <h2>🛒 Checkout</h2>
+    <div id="checkoutList"></div>
+    <h3 id="checkoutTotal"></h3>
+    <button onclick="payNow()">Bayar (QRIS)</button>
+    <button onclick="goBack()">Kembali</button>
+</div>
+
+<!-- IKLAN POPUP -->
+<div id="adsPopup" class="ads hidden">
+    <div class="ads-box">
+        <span class="close-ads" onclick="closeAds()">✖</span>
+
+```
+    <video id="adsVideo" width="100%" autoplay muted>
+        <source src="iklan.mp4" type="video/mp4">
+    </video>
+
+    <h3>🔥 Promo Spesial!</h3>
+    <p>Belanja sekarang, diskon besar!</p>
+
+    <button onclick="closeAds()">Lewati</button>
+</div>
+```
+
+</div>
+
+
 <script>
 
+
+// riwayat pesanan // 
+
+let historyOrder = JSON.parse(localStorage.getItem("historyOrder")) || [];
+
+
+// keranjang dan pesan belanja //
+
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+// login //
 
 let users = JSON.parse(localStorage.getItem("users")) || [];
 
@@ -263,6 +377,7 @@ function updateNavbar(){
     if(user){
         nav.innerHTML = `
             <span>Halo, ${user}</span>
+            <a onclick="viewHistory()">Riwayat</a>
             <a onclick="logout()">Ganti Akun</a>
         `;
         document.getElementById("loginPage").classList.add("hidden");
@@ -274,8 +389,6 @@ function updateNavbar(){
     }
 }
 
-
-
 function login(){
     const user = document.getElementById("username").value;
     const pass = document.getElementById("password").value;
@@ -285,6 +398,10 @@ function login(){
     if(found){
         localStorage.setItem("loginUser", user);
         updateNavbar();
+
+        setTimeout(()=>{
+            showAds();
+        }, 500); // delay biar smooth
     } else {
         alert("Username atau password salah!");
     }
@@ -394,21 +511,6 @@ function openStore(storeName){
     });
 }
 
-    const productList = document.getElementById("productList");
-    productList.innerHTML = "";
-
-    products.forEach(product=>{
-        const price = Math.floor(Math.random()*20000)+5000;
-
-        productList.innerHTML += `
-            <div class="product-card">
-                <img src="${product.img}">
-                <div class="product-name">${product}</div>
-                <div class="product-price">Rp ${price.toLocaleString()}</div>
-            </div>
-        `;
-    });
-
 function goBack(){
     document.getElementById("storePage").classList.add("hidden");
     document.getElementById("home").classList.remove("hidden");
@@ -429,14 +531,220 @@ function addToCart(id,name,price){
     alert("Masuk ke keranjang!");
 }
 
+// NO Transaksi //
+
 function buyNow(id,name,price){
     const qty = parseInt(document.getElementById(`qty-${id}`).value);
     const total = price * qty;
 
-    alert(`Beli ${name} x${qty}\nTotal: Rp ${total.toLocaleString()}`);
+    const transactionId = "TRX-" + Date.now();
+
+    const order = {
+        id: transactionId,
+        name,
+        qty,
+        price,
+        total,
+        date: new Date().toLocaleString()
+    };
+
+    historyOrder.push(order);
+    localStorage.setItem("historyOrder", JSON.stringify(historyOrder));
+
+    showReceipt(order);
 }
 
-updateNavbar();
+function viewHistory(){
+    if(historyOrder.length === 0){
+        alert("Belum ada pesanan!");
+        return;
+    }
+
+    let text = "📦 Riwayat Pesanan:\n\n";
+
+    historyOrder.forEach((item, index)=>{
+        text += `${index+1}. ${item.name}\n`;
+        text += `Qty: ${item.qty}\n`;
+        text += `Total: Rp ${item.total.toLocaleString()}\n`;
+        text += `Tanggal: ${item.date}\n\n`;
+    });
+
+    alert(text);
+}
+
+function payNow(){
+    const buyer = prompt("Masukkan nama pembeli:");
+
+    if(!buyer){
+        alert("Nama wajib diisi!");
+        return;
+    }
+
+    const transactionId = "TRX-" + Date.now();
+    let total = 0;
+
+    cart.forEach(i=>{
+        total += i.price * i.qty;
+    });
+
+    const order = {
+        id: transactionId,
+        buyer,
+        items: cart,
+        total,
+        status: "Diproses",
+        date: new Date().toLocaleString()
+    };
+
+    historyOrder.push(order);
+    localStorage.setItem("historyOrder", JSON.stringify(historyOrder));
+
+    cart = [];
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    showReceipt(order);
+}
+
+function backToHome(){
+    document.getElementById("receiptPage").classList.add("hidden");
+    document.getElementById("home").classList.remove("hidden");
+}
+
+// struk pdf atau print //
+
+function printReceipt(){
+    const content = document.getElementById("receiptBox").innerHTML;
+
+    const win = window.open('', '', 'width=400,height=600');
+
+    win.document.write(`
+        <html>
+        <head>
+            <title>Struk Belanja</title>
+            <style>
+                body{font-family:Arial;padding:20px;}
+                .receipt-item{display:flex;justify-content:space-between;margin:8px 0;}
+                .total{font-weight:bold;margin-top:10px;}
+            </style>
+        </head>
+        <body>
+            ${content}
+        </body>
+        </html>
+    `);
+
+    win.document.close();
+    win.print();
+}
+
+function viewCart(){
+    if(cart.length === 0){
+        alert("Keranjang kosong!");
+        return;
+    }
+
+    document.getElementById("storePage").classList.add("hidden");
+    document.getElementById("checkoutPage").classList.remove("hidden");
+
+    const list = document.getElementById("checkoutList");
+    let total = 0;
+    list.innerHTML = "";
+
+    cart.forEach(item=>{
+        total += item.price * item.qty;
+
+        list.innerHTML += `
+            <div class="receipt-item">
+                <span>${item.name} x${item.qty}</span>
+                <span>Rp ${(item.price*item.qty).toLocaleString()}</span>
+            </div>
+        `;
+    });
+
+    document.getElementById("checkoutTotal").innerText =
+        "Total: Rp " + total.toLocaleString();
+}
+
+setInterval(()=>{
+    historyOrder.forEach(o=>{
+        if(o.status === "Diproses"){
+            o.status = "Selesai";
+        }
+    });
+    localStorage.setItem("historyOrder", JSON.stringify(historyOrder));
+}, 10000);
+
+function showReceipt(order){
+    document.getElementById("storePage").classList.add("hidden");
+    document.getElementById("checkoutPage").classList.add("hidden");
+    document.getElementById("receiptPage").classList.remove("hidden");
+
+    const box = document.getElementById("receiptBox");
+
+    box.innerHTML = `
+        <div style="text-align:center">
+            <img src="https://cdn-icons-png.flaticon.com/512/891/891462.png" width="60">
+            <h3>Supermarket Indonesia</h3>
+            <p><b>No:</b> ${order.id}</p>
+            <p>${order.date}</p>
+        </div>
+
+        <hr>
+
+        <div class="receipt-item">
+            <span>${order.name} x${order.qty}</span>
+            <span>Rp ${order.total.toLocaleString()}</span>
+        </div>
+
+        <div class="total">
+            Total: Rp ${order.total.toLocaleString()}
+        </div>
+
+        <hr>
+
+        <div style="text-align:center;margin-top:15px">
+            <p><b>Scan QRIS untuk bayar</b></p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PAY-${order.id}-${order.total}" />
+            <p style="font-size:12px;color:gray">Simulasi QRIS</p>
+        </div>
+
+        <hr>
+
+        <p style="text-align:center;font-size:12px">
+            Terima kasih sudah belanja 🙏
+        </p>
+    `;
+}
+
+function showAds(){
+    document.getElementById("adsPopup").style.display = "flex";
+}
+
+function closeAds(){
+    document.getElementById("adsPopup").style.display = "none";
+}
+
+
+
+function updateNavbar(){
+    const user = localStorage.getItem("loginUser");
+    const nav = document.getElementById("navMenu");
+
+    if(user){
+        nav.innerHTML = `
+            <span>Halo, ${user}</span>
+            <a onclick="viewCart()">Keranjang (${cart.length})</a>
+            <a onclick="viewHistory()">Riwayat</a>
+            <a onclick="logout()">Ganti Akun</a>
+        `;
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("home").classList.remove("hidden");
+    } else {
+        nav.innerHTML = `<a>Silakan Login</a>`;
+        document.getElementById("loginPage").classList.remove("hidden");
+        document.getElementById("home").classList.add("hidden");
+    }
+}
 
 </script>
 
